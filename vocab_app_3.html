@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Vocab App ป.3</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Mali:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ป้องกันการคลุมดำข้อความและซูมหน้าจอ */
+        body { 
+            font-family: 'Mali', cursive; 
+            background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+            overscroll-behavior-y: contain; /* Prevent pull-to-refresh */
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .eng-font { font-family: 'Fredoka', sans-serif; }
+        
+        /* App Container สำหรับจำลองหน้าจอมือถือ */
+        .app-container {
+            max-width: 480px; /* ขนาดมือถือ */
+            margin: 0 auto;
+            background-color: #f8fafc;
+            min-height: 100vh;
+            min-height: 100dvh;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Animations */
+        .bounce-in { animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .shake-err { animation: shake 0.4s; }
+        .pop { animation: pop 0.2s; }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        @keyframes pop {
+            50% { transform: scale(0.95); }
+            100% { transform: scale(1); }
+        }
+
+        /* Card Flip */
+        .flashcard-inner {
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        .flashcard.flipped .flashcard-inner { transform: rotateY(180deg); }
+        .flashcard-front, .flashcard-back {
+            backface-visibility: hidden;
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+        }
+        .flashcard-back { transform: rotateY(180deg); }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <!-- ================= HOME SCREEN ================= -->
+        <div id="screen-home" class="flex-1 flex flex-col items-center justify-center p-6 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
+            <div class="bg-white p-8 rounded-3xl shadow-xl w-full text-center bounce-in mb-8">
+                <div class="text-6xl mb-4">🦁</div>
+                <h1 class="text-3xl font-bold text-blue-600 mb-2">เก่งศัพท์ ป.3</h1>
+                <p class="text-gray-500 font-semibold">หมวด C (31-45)</p>
+            </div>
+
+            <button onclick="navTo('screen-learn')" class="w-full bg-green-500 hover:bg-green-600 text-white text-2xl font-bold py-5 rounded-2xl shadow-[0_6px_0_#166534] active:shadow-[0_0px_0_#166534] active:translate-y-[6px] transition-all mb-6">
+                📖 ฝึกอ่าน (Learn)
+            </button>
+            
+            <button onclick="navTo('screen-quiz')" class="w-full bg-orange-400 hover:bg-orange-500 text-white text-2xl font-bold py-5 rounded-2xl shadow-[0_6px_0_#9a3412] active:shadow-[0_0px_0_#9a3412] active:translate-y-[6px] transition-all">
+                🎮 เล่นเกม (Quiz)
+            </button>
+        </div>
+
+        <!-- ================= LEARN SCREEN (Flashcards) ================= -->
+        <div id="screen-learn" class="hidden flex-1 flex flex-col bg-blue-50">
+            <!-- Top Bar -->
+            <div class="flex items-center justify-between p-4 bg-white shadow-sm">
+                <button onclick="navTo('screen-home')" class="p-2 text-2xl text-gray-500 bg-gray-100 rounded-full w-12 h-12 flex items-center justify-center">🔙</button>
+                <div class="font-bold text-lg text-blue-600">คำที่ <span id="fc-progress">1/15</span></div>
+                <div class="w-12"></div> <!-- Spacer -->
+            </div>
+
+            <!-- Card Area (Swipeable) -->
+            <div class="flex-1 p-6 flex flex-col justify-center items-center" id="swipe-area">
+                <div class="text-center text-gray-400 mb-2 text-sm animate-pulse">👆 ปัดซ้าย-ขวา เพื่อเลื่อนคำ</div>
+                
+                <div class="flashcard w-full aspect-square max-w-[320px] cursor-pointer" onclick="flipCard()">
+                    <div class="flashcard-inner rounded-3xl shadow-2xl bg-white border-4 border-blue-200">
+                        
+                        <!-- Front (English) -->
+                        <div class="flashcard-front flex flex-col items-center justify-center p-6 bg-white rounded-3xl">
+                            <h2 id="fc-eng" class="eng-font text-5xl font-bold text-gray-800 mb-6 text-center break-words">word</h2>
+                            <button onclick="event.stopPropagation(); playNativeAudio(currentWord.eng)" class="bg-blue-100 text-blue-600 p-4 rounded-full text-4xl shadow-md active:bg-blue-200 pop">
+                                🔊
+                            </button>
+                            <p class="text-gray-400 mt-6 text-sm">แตะการ์ดเพื่อดูความหมาย</p>
+                        </div>
+
+                        <!-- Back (Thai) -->
+                        <div class="flashcard-back flex flex-col items-center justify-center p-6 bg-yellow-50 rounded-3xl border-4 border-yellow-200">
+                            <h2 id="fc-thai" class="text-4xl font-bold text-red-500 mb-4 text-center">ความหมาย</h2>
+                            <p id="fc-pronounce" class="text-xl text-gray-600 font-semibold mb-6">คำอ่าน</p>
+                            <button onclick="event.stopPropagation(); playNativeAudio(currentWord.eng)" class="bg-blue-100 text-blue-600 p-3 rounded-full text-2xl shadow-md active:bg-blue-200 pop">
+                                🔊 ฟังเสียงอีกครั้ง
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Controls -->
+            <div class="flex justify-between p-6 bg-white shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+                <button onclick="prevCard()" class="bg-gray-200 text-gray-700 font-bold py-3 px-6 rounded-xl active:bg-gray-300">◀️ ก่อนหน้า</button>
+                <button onclick="nextCard()" class="bg-blue-500 text-white font-bold py-3 px-8 rounded-xl active:bg-blue-600 shadow-md">ถัดไป ▶️</button>
+            </div>
+        </div>
+
+        <!-- ================= QUIZ SCREEN ================= -->
+        <div id="screen-quiz" class="hidden flex-1 flex flex-col bg-purple-50">
+            <!-- Top Bar -->
+            <div class="flex items-center justify-between p-4 bg-white shadow-sm">
+                <button onclick="navTo('screen-home')" class="p-2 text-2xl text-gray-500 bg-gray-100 rounded-full w-12 h-12 flex items-center justify-center">✖️</button>
+                <div class="font-bold text-xl text-purple-600">คะแนน: <span id="quiz-score" class="text-2xl">0</span> ⭐</div>
+            </div>
+
+            <div class="flex-1 p-6 flex flex-col">
+                <!-- Question -->
+                <div class="bg-white rounded-3xl shadow-lg p-8 text-center mb-6 relative">
+                    <button onclick="playNativeAudio(currentQuizWord.eng)" class="absolute top-4 right-4 bg-purple-100 p-2 rounded-full text-2xl active:scale-90 transition-transform">🔊</button>
+                    <p class="text-gray-500 font-semibold mb-2">คำนี้แปลว่าอะไร?</p>
+                    <h2 id="quiz-word" class="eng-font text-5xl font-bold text-gray-800">word</h2>
+                </div>
+
+                <!-- Options -->
+                <div id="quiz-options" class="flex flex-col gap-4 flex-1 justify-center">
+                    <!-- Buttons generated by JS -->
+                </div>
+
+                <!-- Feedback Popup (Overlay) -->
+                <div id="quiz-feedback" class="absolute inset-0 bg-black/40 hidden items-center justify-center z-50">
+                    <div id="feedback-box" class="bg-white p-8 rounded-3xl text-center transform scale-0 transition-transform duration-300">
+                        <div id="feedback-icon" class="text-6xl mb-4">✅</div>
+                        <h3 id="feedback-text" class="text-2xl font-bold mb-4">เก่งมาก!</h3>
+                        <button id="feedback-btn" class="bg-purple-500 text-white font-bold py-3 px-8 rounded-xl w-full">ข้อต่อไป</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- Vocabulary Data ---
+        const vocabList = [
+            { eng: 'cinema', pronounce: 'ซินีมา', thai: 'โรงภาพยนตร์' },
+            { eng: 'clear', pronounce: 'เคลียร์', thai: 'โปร่งใส, ชัดเจน' },
+            { eng: 'clever', pronounce: 'เคลเว่อร์', thai: 'ฉลาด' },
+            { eng: 'climb', pronounce: 'คลามบ์', thai: 'ปีน, ตะกาย' },
+            { eng: 'closet', pronounce: 'โคลสเซท', thai: 'ตู้' },
+            { eng: 'clothes', pronounce: 'โคลทซ์', thai: 'เสื้อผ้า' },
+            { eng: 'cloudy', pronounce: 'คลาวดี้', thai: 'เมฆหนา, เมฆมาก' },
+            { eng: 'clown', pronounce: 'คลาวน์', thai: 'ตัวตลก' },
+            { eng: 'club', pronounce: 'คลับ', thai: 'สโมสร' },
+            { eng: 'coat', pronounce: 'โคท', thai: 'เสื้อคลุม' },
+            { eng: 'coconut', pronounce: 'โคโคนัท', thai: 'มะพร้าว' },
+            { eng: 'coin', pronounce: 'คอยน์', thai: 'เหรียญ' },
+            { eng: 'cold', pronounce: 'โคลด์', thai: 'เย็น, หนาว' },
+            { eng: 'comb', pronounce: 'โคม', thai: 'หวี' },
+            { eng: 'copy', pronounce: 'คอพพี้', thai: 'สำเนา, คัดลอก' }
+        ];
+
+        // --- State Variables ---
+        let currentIndex = 0;
+        let currentWord = vocabList[0];
+        let quizScore = 0;
+        let currentQuizWord = null;
+
+        // --- Navigation ---
+        function navTo(screenId) {
+            document.querySelectorAll('.app-container > div').forEach(el => el.classList.add('hidden'));
+            document.getElementById(screenId).classList.remove('hidden');
+            document.getElementById(screenId).classList.add('flex');
+
+            if (screenId === 'screen-learn') {
+                currentIndex = 0;
+                loadFlashcard();
+            } else if (screenId === 'screen-quiz') {
+                quizScore = 0;
+                document.getElementById('quiz-score').innerText = quizScore;
+                nextQuiz();
+            }
+        }
+
+        // --- Native Speaker Audio (Google Translate TTS API Trick) ---
+        function playNativeAudio(word) {
+            try {
+                // ใช้ API อ่านออกเสียงของ Google แบบตรง (สำเนียงคนจริงๆ) 
+                // client=tw-ob เป็น parameter ที่ให้โหลดเสียงได้โดยไม่ติด CORS
+                const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(word)}&tl=en-US&client=tw-ob`;
+                const audio = new Audio(url);
+                audio.play().catch(error => {
+                    console.log("Audio play blocked, using fallback", error);
+                    fallbackAudio(word);
+                });
+            } catch (error) {
+                fallbackAudio(word);
+            }
+        }
+
+        // ระบบเสียงสำรอง (เผื่อมือถือบางรุ่นบล็อคเสียงจากเน็ตเวิร์ค)
+        function fallbackAudio(word) {
+            if ('speechSynthesis' in window) {
+                const msg = new SpeechSynthesisUtterance(word);
+                msg.lang = 'en-US';
+                msg.rate = 0.85; // ปรับช้าลงนิดนึงให้เด็กฟังชัดๆ
+                window.speechSynthesis.speak(msg);
+            }
+        }
+
+        // --- Flashcard Logic ---
+        function loadFlashcard() {
+            currentWord = vocabList[currentIndex];
+            document.getElementById('fc-eng').innerText = currentWord.eng;
+            document.getElementById('fc-thai').innerText = currentWord.thai;
+            document.getElementById('fc-pronounce').innerText = `อ่านว่า: ${currentWord.pronounce}`;
+            document.getElementById('fc-progress').innerText = `${currentIndex + 1}/${vocabList.length}`;
+            
+            // รีเซ็ตการ์ดให้คว่ำหน้าเสมอเมื่อเปลี่ยนคำ
+            document.querySelector('.flashcard').classList.remove('flipped');
+            
+            // เล่นเสียงอัตโนมัติ (บางเบราว์เซอร์อาจบล็อคถ้ายังไม่มีการแตะหน้าจอ)
+            setTimeout(() => playNativeAudio(currentWord.eng), 300);
+        }
+
+        function flipCard() {
+            document.querySelector('.flashcard').classList.toggle('flipped');
+        }
+
+        function nextCard() {
+            currentIndex = (currentIndex + 1) % vocabList.length;
+            loadFlashcard();
+        }
+
+        function prevCard() {
+            currentIndex = (currentIndex - 1 + vocabList.length) % vocabList.length;
+            loadFlashcard();
+        }
+
+        // --- Swipe Setup for Mobile ---
+        let touchstartX = 0;
+        let touchendX = 0;
+        const swipeArea = document.getElementById('swipe-area');
+
+        swipeArea.addEventListener('touchstart', e => {
+            touchstartX = e.changedTouches[0].screenX;
+        }, {passive: true});
+
+        swipeArea.addEventListener('touchend', e => {
+            touchendX = e.changedTouches[0].screenX;
+            handleSwipe();
+        }, {passive: true});
+
+        function handleSwipe() {
+            const threshold = 50; // ระยะการปัดขั้นต่ำ
+            if (touchendX < touchstartX - threshold) nextCard(); // ปัดซ้าย = ถัดไป
+            if (touchendX > touchstartX + threshold) prevCard(); // ปัดขวา = ก่อนหน้า
+        }
+
+        // --- Quiz Logic ---
+        function nextQuiz() {
+            // สุ่มคำศัพท์
+            const randomIndex = Math.floor(Math.random() * vocabList.length);
+            currentQuizWord = vocabList[randomIndex];
+            
+            document.getElementById('quiz-word').innerText = currentQuizWord.eng;
+
+            // สร้างตัวเลือก (ถูก 1 ผิด 3)
+            let options = [currentQuizWord.thai];
+            while (options.length < 4) {
+                const randomWrong = vocabList[Math.floor(Math.random() * vocabList.length)].thai;
+                if (!options.includes(randomWrong)) options.push(randomWrong);
+            }
+            options.sort(() => Math.random() - 0.5); // สลับตำแหน่ง
+
+            // แสดงปุ่ม
+            const container = document.getElementById('quiz-options');
+            container.innerHTML = '';
+            
+            options.forEach(option => {
+                const btn = document.createElement('button');
+                btn.className = 'bg-white border-2 border-purple-200 text-purple-900 text-xl font-bold py-4 px-6 rounded-2xl shadow-sm active:bg-purple-100 active:scale-95 transition-all text-left';
+                btn.innerText = option;
+                btn.onclick = () => checkAnswer(option === currentQuizWord.thai, btn);
+                container.appendChild(btn);
+            });
+
+            // เล่นเสียง
+            setTimeout(() => playNativeAudio(currentQuizWord.eng), 300);
+        }
+
+        function checkAnswer(isCorrect, btn) {
+            const feedbackOverlay = document.getElementById('quiz-feedback');
+            const feedbackBox = document.getElementById('feedback-box');
+            const feedbackIcon = document.getElementById('feedback-icon');
+            const feedbackText = document.getElementById('feedback-text');
+            const nextBtn = document.getElementById('feedback-btn');
+
+            if (isCorrect) {
+                btn.classList.add('bg-green-100', 'border-green-500', 'text-green-700');
+                quizScore += 10;
+                document.getElementById('quiz-score').innerText = quizScore;
+                
+                playNativeAudio("correct"); // เสียงเอฟเฟกต์สั้นๆ
+                
+                feedbackIcon.innerText = '🌟';
+                feedbackText.innerText = 'เก่งมาก! ถูกต้องครับ';
+                feedbackText.className = 'text-2xl font-bold mb-4 text-green-600';
+                nextBtn.className = 'bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-xl w-full text-xl';
+            } else {
+                btn.classList.add('bg-red-100', 'border-red-500', 'text-red-700', 'shake-err');
+                
+                // หาปุ่มที่ถูกและไฮไลท์
+                const allBtns = document.getElementById('quiz-options').children;
+                for(let b of allBtns) {
+                    if(b.innerText === currentQuizWord.thai) {
+                        b.classList.add('bg-green-100', 'border-green-500', 'text-green-700');
+                    }
+                }
+
+                feedbackIcon.innerText = 'Oops! 😅';
+                feedbackText.innerText = 'ยังไม่ใช่นะครับ';
+                feedbackText.className = 'text-2xl font-bold mb-4 text-red-500';
+                nextBtn.className = 'bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-8 rounded-xl w-full text-xl';
+            }
+
+            // แสดง Popup
+            feedbackOverlay.classList.remove('hidden');
+            feedbackOverlay.classList.add('flex');
+            setTimeout(() => feedbackBox.classList.remove('scale-0'), 10);
+
+            nextBtn.onclick = () => {
+                feedbackBox.classList.add('scale-0');
+                setTimeout(() => {
+                    feedbackOverlay.classList.add('hidden');
+                    feedbackOverlay.classList.remove('flex');
+                    nextQuiz();
+                }, 300);
+            };
+        }
+
+    </script>
+</body>
+</html>
