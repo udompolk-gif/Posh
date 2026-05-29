@@ -95,22 +95,17 @@
 <body>
     <div class="app-container">
         
-        <!-- ================= HOME SCREEN ================= -->
         <div id="screen-home" class="flex-1 flex flex-col p-6 bg-[#ddf4ff] relative">
             
-            <!-- Top Bar: Accent Toggle & XP -->
             <div class="flex justify-between items-center mb-8 bg-white/50 p-3 rounded-2xl backdrop-blur-sm">
-                <!-- Accent Toggle -->
                 <button onclick="toggleAccent()" id="accent-btn" class="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl font-bold text-slate-700 shadow-sm border-2 border-slate-200 btn-duo active:shadow-none">
                     🇺🇸 US
                 </button>
-                <!-- XP Score -->
                 <div class="flex items-center gap-2 font-bold text-amber-500 text-xl bg-white px-4 py-1.5 rounded-xl shadow-sm border-2 border-amber-100">
                     ⚡ <span id="total-xp">0</span> XP
                 </div>
             </div>
 
-            <!-- Character & Title -->
             <div class="flex-1 flex flex-col items-center justify-center">
                 <div class="text-[6rem] mb-2 bounce-in drop-shadow-xl" id="mascot">🐻</div>
                 <div class="bg-white px-8 py-6 rounded-[2rem] shadow-xl text-center bounce-in border-b-[6px] border-slate-200 mb-8 w-full">
@@ -118,7 +113,6 @@
                     <p class="text-slate-500 font-semibold bg-slate-100 py-1 px-4 rounded-full inline-block">หมวด C (31-45)</p>
                 </div>
 
-                <!-- Action Buttons -->
                 <button onclick="navTo('screen-learn')" class="w-full bg-[#58cc02] text-white text-2xl font-bold py-5 rounded-2xl border-b-[6px] border-[#58a700] btn-duo mb-4 flex items-center justify-center gap-3">
                     <span class="text-3xl">📖</span> เริ่มเรียน (Learn)
                 </button>
@@ -129,9 +123,7 @@
             </div>
         </div>
 
-        <!-- ================= LEARN SCREEN (Flashcards & Voice Check) ================= -->
         <div id="screen-learn" class="hidden flex-1 flex flex-col bg-slate-50">
-            <!-- Top Bar -->
             <div class="flex items-center gap-4 p-4 bg-white border-b-2 border-slate-200 z-10">
                 <button onclick="navTo('screen-home')" class="text-2xl text-slate-400 p-2 btn-duo active:translate-y-1">✖️</button>
                 <div class="flex-1 progress-bar-bg">
@@ -140,33 +132,32 @@
                 <div class="font-bold text-slate-500 min-w-[3rem] text-center"><span id="fc-progress">1</span>/15</div>
             </div>
 
-            <!-- Card Area -->
             <div class="flex-1 p-6 flex flex-col justify-center items-center relative" id="swipe-area">
                 
-                <!-- Floating XP Animation Container -->
                 <div id="floating-xp-container" class="absolute inset-0 pointer-events-none flex items-center justify-center z-50"></div>
 
                 <div class="flashcard w-full aspect-[4/5] max-w-[340px] cursor-pointer" onclick="flipCard()">
                     <div class="flashcard-inner rounded-[2rem] shadow-lg bg-white border-b-[6px] border-slate-200">
                         
-                        <!-- Front (English) -->
                         <div class="flashcard-front p-6 bg-white rounded-[2rem]">
-                            <h2 id="fc-eng" class="eng-font text-[3.5rem] leading-none font-bold text-slate-800 mb-8 text-center break-words w-full">word</h2>
+                            <h2 id="fc-eng" class="eng-font text-[3.5rem] leading-none font-bold text-slate-800 mb-2 text-center break-words w-full">word</h2>
                             
-                            <!-- Voice Controls (Normal & Slow) -->
+                            <div id="fc-spelling" class="eng-font text-xl text-slate-400 font-bold uppercase tracking-[0.2em] mb-6 text-center w-full">W-O-R-D</div>
+
                             <div class="flex gap-4 mb-4" onclick="event.stopPropagation();">
-                                <!-- ปุ่มออกเสียงช้า -->
+                                <button onclick="playSpellingAudio(currentWord.eng)" class="bg-purple-50 text-purple-500 p-4 rounded-[1.5rem] flex flex-col items-center justify-center border-b-4 border-purple-200 btn-duo w-20">
+                                    <span class="text-3xl">🔤</span>
+                                </button>
+                                
                                 <button onclick="playClearAudio(currentWord.eng, true)" class="bg-blue-50 text-blue-500 p-4 rounded-[1.5rem] flex flex-col items-center justify-center border-b-4 border-blue-200 btn-duo w-20">
                                     <span class="text-3xl">🐢</span>
                                 </button>
                                 
-                                <!-- ปุ่มออกเสียงปกติ -->
                                 <button onclick="playClearAudio(currentWord.eng, false)" class="bg-[#1cb0f6] text-white p-4 rounded-[1.5rem] flex flex-col items-center justify-center border-b-4 border-[#1899d6] btn-duo w-24">
                                     <span class="text-4xl">🔊</span>
                                 </button>
                             </div>
 
-                            <!-- ระบบอัดเสียง (Speech Recognition) -->
                             <div class="mt-4 w-full" onclick="event.stopPropagation();">
                                 <button id="mic-btn" onclick="startSpeechRecognition()" class="w-full bg-white border-2 border-slate-200 text-slate-600 font-bold py-3 rounded-xl btn-duo flex items-center justify-center gap-2">
                                     <span class="text-2xl" id="mic-icon">🎤</span> <span id="mic-text">กดเพื่อฝึกพูด</span>
@@ -176,13 +167,11 @@
                             <p class="text-slate-400 mt-4 text-sm font-semibold flex items-center gap-1">👆 แตะเพื่อดูคำแปล</p>
                         </div>
 
-                        <!-- Back (Thai) -->
                         <div class="flashcard-back p-6 bg-yellow-50 rounded-[2rem] border-b-[6px] border-yellow-200">
                             <h2 id="fc-thai" class="text-4xl font-bold text-slate-800 mb-4 text-center w-full">ความหมาย</h2>
                             <div class="bg-white px-6 py-3 rounded-2xl shadow-sm mb-8 border-2 border-yellow-100">
                                 <p id="fc-pronounce" class="text-xl text-slate-600 font-bold">คำอ่าน</p>
                             </div>
-                            <!-- Mascot Feedback -->
                             <div class="text-5xl mb-4">🐻💬</div>
                             <p class="text-slate-500 font-bold">"เก่งมากเลย!"</p>
                         </div>
@@ -191,16 +180,13 @@
                 </div>
             </div>
 
-            <!-- Bottom Controls -->
             <div class="flex justify-between p-6 bg-white border-t-2 border-slate-100 z-10">
                 <button onclick="prevCard()" class="bg-slate-100 text-slate-500 font-bold py-4 px-6 rounded-2xl border-b-4 border-slate-200 btn-duo w-[48%] text-lg">◀️ กลับ</button>
                 <button onclick="nextCard()" class="bg-[#58cc02] text-white font-bold py-4 px-6 rounded-2xl border-b-4 border-[#58a700] btn-duo w-[48%] text-lg">ต่อไป ▶️</button>
             </div>
         </div>
 
-        <!-- ================= QUIZ SCREEN ================= -->
         <div id="screen-quiz" class="hidden flex-1 flex flex-col bg-slate-50">
-            <!-- Top Bar -->
             <div class="flex items-center gap-4 p-4 bg-white border-b-2 border-slate-200 z-10">
                 <button onclick="navTo('screen-home')" class="text-2xl text-slate-400 p-2 btn-duo active:translate-y-1">✖️</button>
                 <div class="flex-1 progress-bar-bg">
@@ -209,7 +195,6 @@
             </div>
 
             <div class="flex-1 p-6 flex flex-col">
-                <!-- Question -->
                 <div class="bg-white rounded-[2rem] border-b-[6px] border-slate-200 p-8 text-center mb-6 relative">
                     <button onclick="playClearAudio(currentQuizWord.eng, false)" class="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-[#1cb0f6] text-white p-4 rounded-[1.5rem] border-b-4 border-[#1899d6] btn-duo z-10">
                         <span class="text-3xl">🔊</span>
@@ -218,12 +203,9 @@
                     <p class="text-slate-400 font-bold">เลือกคำแปลที่ถูกต้อง</p>
                 </div>
 
-                <!-- Options -->
                 <div id="quiz-options" class="flex flex-col gap-4 flex-1 justify-center mt-6">
-                    <!-- Buttons generated by JS -->
-                </div>
+                    </div>
 
-                <!-- Feedback Popup (Overlay - Bottom Sheet style) -->
                 <div id="quiz-feedback" class="absolute bottom-0 left-0 right-0 bg-white rounded-t-[2rem] shadow-[0_-10px_40px_rgba(0,0,0,0.1)] p-6 transform translate-y-full transition-transform duration-300 z-50 flex flex-col gap-4">
                     <div class="flex items-center gap-4">
                         <div id="feedback-icon" class="text-5xl bg-green-100 p-4 rounded-full">✅</div>
@@ -234,7 +216,6 @@
                     </div>
                     <button id="feedback-btn" class="bg-[#58cc02] text-white font-bold py-4 px-8 rounded-2xl border-b-[6px] border-[#58a700] w-full text-xl btn-duo">ทำต่อไป</button>
                 </div>
-                <!-- Backdrop -->
                 <div id="quiz-backdrop" class="absolute inset-0 bg-slate-900/20 hidden z-40"></div>
             </div>
         </div>
@@ -372,6 +353,32 @@
             }
         }
         
+        // --- SPELLING AUDIO SYSTEM ---
+        function playSpellingAudio(word) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                
+                const langCode = currentAccent === 'US' ? 'en-US' : 'en-GB';
+                
+                // แยกตัวอักษรและเว้นวรรคให้ระบบอ่านทีละตัวอักษรอย่างชัดเจน 
+                // แล้วตามด้วยการอ่านรวมคำหนึ่งรอบ เช่น "c. i. n. e. m. a. cinema"
+                const spelledText = word.split('').join('. ') + '. ' + word;
+                
+                const msg = new SpeechSynthesisUtterance(spelledText);
+                msg.lang = langCode;
+                msg.rate = 0.7; // ปรับให้ช้าลงเล็กน้อยเพื่อให้ฟังตัวอักษรทัน
+                
+                const voices = window.speechSynthesis.getVoices();
+                let bestVoice = voices.find(v => v.lang.includes(langCode) && (v.name.includes('Premium') || v.name.includes('Enhanced')));
+                if (!bestVoice) bestVoice = voices.find(v => v.lang.includes(langCode) && v.name.includes('Google'));
+                if (!bestVoice) bestVoice = voices.find(v => v.lang.includes(langCode));
+                
+                if (bestVoice) msg.voice = bestVoice;
+                
+                window.speechSynthesis.speak(msg);
+            }
+        }
+
         if ('speechSynthesis' in window) window.speechSynthesis.getVoices();
 
         // --- SPEECH RECOGNITION (AI ตรวจเสียงพูด) ---
@@ -458,6 +465,10 @@
         function loadFlashcard() {
             currentWord = vocabList[currentIndex];
             document.getElementById('fc-eng').innerText = currentWord.eng;
+            
+            // แสดงตัวสะกด (แยกด้วยขีด)
+            document.getElementById('fc-spelling').innerText = currentWord.eng.split('').join('-');
+
             document.getElementById('fc-thai').innerText = currentWord.thai;
             document.getElementById('fc-pronounce').innerText = `อ่านว่า: ${currentWord.pronounce}`;
             
