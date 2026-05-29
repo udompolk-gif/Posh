@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Vocab App ป.3 - Super Upgrade</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Mali:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ป้องกันการคลุมดำและพฤติกรรมแปลกๆ บนมือถือ */
+        body { 
+            font-family: 'Mali', cursive; 
+            background: #f3f4f6;
+            overscroll-behavior-y: contain; 
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .eng-font { font-family: 'Fredoka', sans-serif; }
+        
+        /* App Container สำหรับจำลองหน้าจอมือถือ */
+        .app-container {
+            max-width: 480px; 
+            margin: 0 auto;
+            background-color: #ffffff;
+            min-height: 100vh;
+            min-height: 100dvh;
+            box-shadow: 0 0 20px rgba(0,0,0,0.15);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Duolingo-style Buttons */
+        .btn-duo {
+            transition: all 0.1s;
+            position: relative;
+            border-radius: 1rem;
+        }
+        .btn-duo:active {
+            transform: translateY(4px);
+        }
+
+        /* Animations */
+        .bounce-in { animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .shake-err { animation: shake 0.4s; }
+        .pulse-mic { animation: pulseMic 1.5s infinite; }
+        .float-up { animation: floatUp 1s forwards; }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        @keyframes pulseMic {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-50px) scale(1.5); }
+        }
+
+        /* Card Flip */
+        .flashcard-inner {
+            transition: transform 0.5s cubic-bezier(0.4, 0.2, 0.2, 1);
+            transform-style: preserve-3d;
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        .flashcard.flipped .flashcard-inner { transform: rotateY(180deg); }
+        .flashcard-front, .flashcard-back {
+            backface-visibility: hidden;
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .flashcard-back { transform: rotateY(180deg); }
+
+        /* Progress Bar */
+        .progress-bar-bg { background-color: #e5e7eb; border-radius: 1rem; height: 16px; width: 100%; overflow: hidden; }
+        .progress-bar-fill { background-color: #58cc02; height: 100%; transition: width 0.3s ease; border-radius: 1rem; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        
+        <div id="screen-home" class="flex-1 flex flex-col p-6 bg-[#ddf4ff] relative">
+            
+            <div class="flex justify-between items-center mb-8 bg-white/50 p-3 rounded-2xl backdrop-blur-sm">
+                <button onclick="toggleAccent()" id="accent-btn" class="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl font-bold text-slate-700 shadow-sm border-2 border-slate-200 btn-duo active:shadow-none">
+                    🇺🇸 US
+                </button>
+                <div class="flex items-center gap-2 font-bold text-amber-500 text-xl bg-white px-4 py-1.5 rounded-xl shadow-sm border-2 border-amber-100">
+                    ⚡ <span id="total-xp">0</span> XP
+                </div>
+            </div>
+
+            <div class="flex-1 flex flex-col items-center justify-center">
+                <div class="text-[6rem] mb-2 bounce-in drop-shadow-xl" id="mascot">🐻</div>
+                <div class="bg-white px-8 py-6 rounded-[2rem] shadow-xl text-center bounce-in border-b-[6px] border-slate-200 mb-8 w-full">
+                    <h1 class="text-3xl font-bold text-blue-500 mb-2">เก่งศัพท์ ป.3</h1>
+                    <p class="text-slate-500 font-semibold bg-slate-100 py-1 px-4 rounded-full inline-block">หมวด C (31-45)</p>
+                </div>
+
+                <button onclick="navTo('screen-learn')" class="w-full bg-[#58cc02] text-white text-2xl font-bold py-5 rounded-2xl border-b-[6px] border-[#58a700] btn-duo mb-4 flex items-center justify-center gap-3">
+                    <span class="text-3xl">📖</span> เริ่มเรียน (Learn)
+                </button>
+                
+                <button onclick="navTo('screen-quiz')" class="w-full bg-[#1cb0f6] text-white text-2xl font-bold py-5 rounded-2xl border-b-[6px] border-[#1899d6] btn-duo flex items-center justify-center gap-3">
+                    <span class="text-3xl">🎮</span> ทดสอบ (Quiz)
+                </button>
+            </div>
+        </div>
+
+        <div id="screen-learn" class="hidden flex-1 flex flex-col bg-slate-50">
+            <div class="flex items-center gap-4 p-4 bg-white border-b-2 border-slate-200 z-10">
+                <button onclick="navTo('screen-home')" class="text-2xl text-slate-400 p-2 btn-duo active:translate-y-1">✖️</button>
+                <div class="flex-1 progress-bar-bg">
+                    <div id="learn-progress" class="progress-bar-fill" style="width: 5%;"></div>
+                </div>
+                <div class="font-bold text-slate-500 min-w-[3rem] text-center"><span id="fc-progress">1</span>/15</div>
+            </div>
+
+            <div class="flex-1 p-6 flex flex-col justify-center items-center relative" id="swipe-area">
+                
+                <div id="floating-xp-container" class="absolute inset-0 pointer-events-none flex items-center justify-center z-50"></div>
+
+                <div class="flashcard w-full aspect-[4/5] max-w-[340px] cursor-pointer" onclick="flipCard()">
+                    <div class="flashcard-inner rounded-[2rem] shadow-lg bg-white border-b-[6px] border-slate-200">
+                        
+                        <div class="flashcard-front p-6 bg-white rounded-[2rem]">
+                            <h2 id="fc-eng" class="eng-font text-[3.5rem] leading-none font-bold text-slate-800 mb-2 text-center break-words w-full">word</h2>
+                            
+                            <div id="fc-spelling" class="eng-font text-xl text-slate-400 font-bold uppercase tracking-[0.2em] mb-6 text-center w-full">W-O-R-D</div>
+
+                            <div class="flex gap-4 mb-4" onclick="event.stopPropagation();">
+                                <button onclick="playSpellingAudio(currentWord.eng)" class="bg-purple-50 text-purple-500 p-4 rounded-[1.5rem] flex flex-col items-center justify-center border-b-4 border-purple-200 btn-duo w-20">
+                                    <span class="text-3xl">🔤</span>
+                                </button>
+                                
+                                <button onclick="playClearAudio(currentWord.eng, true)" class="bg-blue-50 text-blue-500 p-4 rounded-[1.5rem] flex flex-col items-center justify-center border-b-4 border-blue-200 btn-duo w-20">
+                                    <span class="text-3xl">🐢</span>
+                                </button>
+                                
+                                <button onclick="playClearAudio(currentWord.eng, false)" class="bg-[#1cb0f6] text-white p-4 rounded-[1.5rem] flex flex-col items-center justify-center border-b-4 border-[#1899d6] btn-duo w-24">
+                                    <span class="text-4xl">🔊</span>
+                                </button>
+                            </div>
+
+                            <div class="mt-4 w-full" onclick="event.stopPropagation();">
+                                <button id="mic-btn" onclick="startSpeechRecognition()" class="w-full bg-white border-2 border-slate-200 text-slate-600 font-bold py-3 rounded-xl btn-duo flex items-center justify-center gap-2">
+                                    <span class="text-2xl" id="mic-icon">🎤</span> <span id="mic-text">กดเพื่อฝึกพูด</span>
+                                </button>
+                            </div>
+                            
+                            <p class="text-slate-400 mt-4 text-sm font-semibold flex items-center gap-1">👆 แตะเพื่อดูคำแปล</p>
+                        </div>
+
+                        <div class="flashcard-back p-6 bg-yellow-50 rounded-[2rem] border-b-[6px] border-yellow-200">
+                            <h2 id="fc-thai" class="text-4xl font-bold text-slate-800 mb-4 text-center w-full">ความหมาย</h2>
+                            <div class="bg-white px-6 py-3 rounded-2xl shadow-sm mb-8 border-2 border-yellow-100">
+                                <p id="fc-pronounce" class="text-xl text-slate-600 font-bold">คำอ่าน</p>
+                            </div>
+                            <div class="text-5xl mb-4">🐻💬</div>
+                            <p class="text-slate-500 font-bold">"เก่งมากเลย!"</p>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-between p-6 bg-white border-t-2 border-slate-100 z-10">
+                <button onclick="prevCard()" class="bg-slate-100 text-slate-500 font-bold py-4 px-6 rounded-2xl border-b-4 border-slate-200 btn-duo w-[48%] text-lg">◀️ กลับ</button>
+                <button onclick="nextCard()" class="bg-[#58cc02] text-white font-bold py-4 px-6 rounded-2xl border-b-4 border-[#58a700] btn-duo w-[48%] text-lg">ต่อไป ▶️</button>
+            </div>
+        </div>
+
+        <div id="screen-quiz" class="hidden flex-1 flex flex-col bg-slate-50">
+            <div class="flex items-center gap-4 p-4 bg-white border-b-2 border-slate-200 z-10">
+                <button onclick="navTo('screen-home')" class="text-2xl text-slate-400 p-2 btn-duo active:translate-y-1">✖️</button>
+                <div class="flex-1 progress-bar-bg">
+                    <div id="quiz-progress" class="progress-bar-fill bg-orange-400" style="width: 0%;"></div>
+                </div>
+            </div>
+
+            <div class="flex-1 p-6 flex flex-col">
+                <div class="bg-white rounded-[2rem] border-b-[6px] border-slate-200 p-8 text-center mb-6 relative">
+                    <button onclick="playClearAudio(currentQuizWord.eng, false)" class="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-[#1cb0f6] text-white p-4 rounded-[1.5rem] border-b-4 border-[#1899d6] btn-duo z-10">
+                        <span class="text-3xl">🔊</span>
+                    </button>
+                    <h2 id="quiz-word" class="eng-font text-5xl font-bold text-slate-800 mb-4">word</h2>
+                    <p class="text-slate-400 font-bold">เลือกคำแปลที่ถูกต้อง</p>
+                </div>
+
+                <div id="quiz-options" class="flex flex-col gap-4 flex-1 justify-center mt-6">
+                    </div>
+
+                <div id="quiz-feedback" class="absolute bottom-0 left-0 right-0 bg-white rounded-t-[2rem] shadow-[0_-10px_40px_rgba(0,0,0,0.1)] p-6 transform translate-y-full transition-transform duration-300 z-50 flex flex-col gap-4">
+                    <div class="flex items-center gap-4">
+                        <div id="feedback-icon" class="text-5xl bg-green-100 p-4 rounded-full">✅</div>
+                        <div>
+                            <h3 id="feedback-text" class="text-2xl font-bold text-green-500">ยอดเยี่ยม!</h3>
+                            <p id="feedback-sub" class="text-slate-500 font-bold">+10 XP</p>
+                        </div>
+                    </div>
+                    <button id="feedback-btn" class="bg-[#58cc02] text-white font-bold py-4 px-8 rounded-2xl border-b-[6px] border-[#58a700] w-full text-xl btn-duo">ทำต่อไป</button>
+                </div>
+                <div id="quiz-backdrop" class="absolute inset-0 bg-slate-900/20 hidden z-40"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- Vocabulary Data ---
+        const vocabList = [
+            { eng: 'cinema', pronounce: 'ซินีมา', thai: 'โรงภาพยนตร์' },
+            { eng: 'clear', pronounce: 'เคลียร์', thai: 'โปร่งใส, ชัดเจน' },
+            { eng: 'clever', pronounce: 'เคลเว่อร์', thai: 'ฉลาด' },
+            { eng: 'climb', pronounce: 'คลามบ์', thai: 'ปีน, ตะกาย' },
+            { eng: 'closet', pronounce: 'โคลสเซท', thai: 'ตู้' },
+            { eng: 'clothes', pronounce: 'โคลทซ์', thai: 'เสื้อผ้า' },
+            { eng: 'cloudy', pronounce: 'คลาวดี้', thai: 'เมฆหนา, เมฆมาก' },
+            { eng: 'clown', pronounce: 'คลาวน์', thai: 'ตัวตลก' },
+            { eng: 'club', pronounce: 'คลับ', thai: 'สโมสร' },
+            { eng: 'coat', pronounce: 'โคท', thai: 'เสื้อคลุม' },
+            { eng: 'coconut', pronounce: 'โคโคนัท', thai: 'มะพร้าว' },
+            { eng: 'coin', pronounce: 'คอยน์', thai: 'เหรียญ' },
+            { eng: 'cold', pronounce: 'โคลด์', thai: 'เย็น, หนาว' },
+            { eng: 'comb', pronounce: 'โคม', thai: 'หวี' },
+            { eng: 'copy', pronounce: 'คอพพี้', thai: 'สำเนา, คัดลอก' }
+        ];
+
+        // --- App State ---
+        let currentIndex = 0;
+        let currentWord = vocabList[0];
+        let currentQuizWord = null;
+        let quizCount = 0;
+        let totalXP = parseInt(localStorage.getItem('vocab_xp')) || 0;
+        let currentAccent = localStorage.getItem('vocab_accent') || 'US'; // US หรือ UK
+
+        // --- Initial Setup ---
+        document.getElementById('total-xp').innerText = totalXP;
+        updateAccentBtn();
+
+        // --- Navigation ---
+        function navTo(screenId) {
+            document.querySelectorAll('.app-container > div[id^="screen-"]').forEach(el => el.classList.add('hidden'));
+            document.getElementById(screenId).classList.remove('hidden');
+            document.getElementById(screenId).classList.add('flex');
+
+            if (screenId === 'screen-learn') {
+                currentIndex = 0;
+                loadFlashcard();
+            } else if (screenId === 'screen-quiz') {
+                quizCount = 0;
+                nextQuiz();
+            } else if (screenId === 'screen-home') {
+                document.getElementById('total-xp').innerText = totalXP;
+                // สุ่ม mascot ขยับ
+                const mascots = ['🐻', '🦊', '🦁', '🦉', '🐶'];
+                document.getElementById('mascot').innerText = mascots[Math.floor(Math.random() * mascots.length)];
+            }
+        }
+
+        // --- Accent Toggle ---
+        function toggleAccent() {
+            currentAccent = currentAccent === 'US' ? 'UK' : 'US';
+            localStorage.setItem('vocab_accent', currentAccent);
+            updateAccentBtn();
+            playClearAudio("Hello", false); // Test voice
+        }
+        function updateAccentBtn() {
+            const btn = document.getElementById('accent-btn');
+            btn.innerHTML = currentAccent === 'US' ? '🇺🇸 US' : '🇬🇧 UK';
+        }
+
+        // --- Gamification (XP System) ---
+        function addXP(amount) {
+            totalXP += amount;
+            localStorage.setItem('vocab_xp', totalXP);
+            document.getElementById('total-xp').innerText = totalXP;
+        }
+
+        function showFloatingXP(amount) {
+            const container = document.getElementById('floating-xp-container');
+            const xpText = document.createElement('div');
+            xpText.innerText = `+${amount} XP`;
+            xpText.className = 'text-4xl font-bold text-amber-500 drop-shadow-md float-up absolute';
+            container.appendChild(xpText);
+            
+            // เล่นเสียงวิ้งๆ
+            if('speechSynthesis' in window) {
+                let s = new SpeechSynthesisUtterance("Ding"); s.volume=0.2; s.rate=2; window.speechSynthesis.speak(s);
+            }
+
+            setTimeout(() => { xpText.remove(); }, 1000);
+        }
+
+        // --- AUDIO SYSTEM (รองรับสำเนียง) ---
+        function playClearAudio(word, isSlow = false) {
+            try {
+                // อัปเกรด: ใช้ API ดิกชันนารีที่ให้เสียงมนุษย์จริง (Human Voice) ชัดเจน 100%
+                // type=2 คือ US (อเมริกัน), type=1 คือ UK (อังกฤษ)
+                const accentType = currentAccent === 'US' ? '2' : '1';
+                const audioUrl = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(word)}&type=${accentType}`;
+                
+                let audio = new Audio(audioUrl);
+                
+                if (isSlow) {
+                    audio.playbackRate = 0.6; // ลดความเร็วลง
+                    audio.preservesPitch = true; // รักษาระดับเสียงไม่ให้ต่ำลง (ไม่เป็นเสียงหุ่นยนต์)
+                }
+                
+                // ลองเล่นเสียงจาก API หลัก
+                audio.play().catch(() => fallbackAudio(word, isSlow));
+            } catch (error) {
+                fallbackAudio(word, isSlow);
+            }
+        }
+
+        function fallbackAudio(word, isSlow) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const langCode = currentAccent === 'US' ? 'en-US' : 'en-GB';
+                const msg = new SpeechSynthesisUtterance(word);
+                msg.lang = langCode;
+                
+                const voices = window.speechSynthesis.getVoices();
+                
+                // ค้นหาเสียงคุณภาพสูงสุดในเครื่อง (Premium, Enhanced, Google, Siri)
+                let bestVoice = voices.find(v => v.lang.includes(langCode) && (v.name.includes('Premium') || v.name.includes('Enhanced')));
+                if (!bestVoice) bestVoice = voices.find(v => v.lang.includes(langCode) && v.name.includes('Google'));
+                if (!bestVoice) bestVoice = voices.find(v => v.lang.includes(langCode) && v.name.includes('Siri'));
+                if (!bestVoice) bestVoice = voices.find(v => v.lang.includes(langCode));
+                
+                if (bestVoice) msg.voice = bestVoice;
+                
+                // ปรับความเร็ว (เรทปกติ 0.85 ให้ฟังง่ายขึ้น, ถ้าช้าคือ 0.4)
+                msg.rate = isSlow ? 0.4 : 0.85;
+                window.speechSynthesis.speak(msg);
+            }
+        }
+        
+        // --- SPELLING AUDIO SYSTEM ---
+        function playSpellingAudio(word) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                
+                const langCode = currentAccent === 'US' ? 'en-US' : 'en-GB';
+                
+                // แยกตัวอักษรและเว้นวรรคให้ระบบอ่านทีละตัวอักษรอย่างชัดเจน 
+                // แล้วตามด้วยการอ่านรวมคำหนึ่งรอบ เช่น "c. i. n. e. m. a. cinema"
+                const spelledText = word.split('').join('. ') + '. ' + word;
+                
+                const msg = new SpeechSynthesisUtterance(spelledText);
+                msg.lang = langCode;
+                msg.rate = 0.7; // ปรับให้ช้าลงเล็กน้อยเพื่อให้ฟังตัวอักษรทัน
+                
+                const voices = window.speechSynthesis.getVoices();
+                let bestVoice = voices.find(v => v.lang.includes(langCode) && (v.name.includes('Premium') || v.name.includes('Enhanced')));
+                if (!bestVoice) bestVoice = voices.find(v => v.lang.includes(langCode) && v.name.includes('Google'));
+                if (!bestVoice) bestVoice = voices.find(v => v.lang.includes(langCode));
+                
+                if (bestVoice) msg.voice = bestVoice;
+                
+                window.speechSynthesis.speak(msg);
+            }
+        }
+
+        if ('speechSynthesis' in window) window.speechSynthesis.getVoices();
+
+        // --- SPEECH RECOGNITION (AI ตรวจเสียงพูด) ---
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition = null;
+        
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+        }
+
+        function startSpeechRecognition() {
+            if (!recognition) {
+                alert("เบราว์เซอร์นี้ไม่รองรับระบบตรวจจับเสียงครับ 😢 แนะนำให้ใช้ Chrome หรือ Safari");
+                return;
+            }
+
+            const micBtn = document.getElementById('mic-btn');
+            const micIcon = document.getElementById('mic-icon');
+            const micText = document.getElementById('mic-text');
+
+            // ตั้งค่าสำเนียงที่ตรวจจับ
+            recognition.lang = currentAccent === 'US' ? 'en-US' : 'en-GB';
+
+            recognition.onstart = function() {
+                micBtn.classList.add('pulse-mic', 'bg-red-50', 'border-red-200');
+                micText.innerText = "กำลังฟัง...";
+                micText.classList.add('text-red-500');
+            };
+
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript.toLowerCase().trim();
+                // ลบเครื่องหมายวรรคตอนเพื่อเปรียบเทียบง่ายขึ้น
+                const cleanTranscript = transcript.replace(/[.,!?]/g, "");
+                const targetWord = currentWord.eng.toLowerCase();
+                
+                console.log(`พูดว่า: ${cleanTranscript} | เป้าหมาย: ${targetWord}`);
+
+                if (cleanTranscript === targetWord || cleanTranscript.includes(targetWord)) {
+                    // ออกเสียงถูก!
+                    micIcon.innerText = "✨";
+                    micText.innerText = "เยี่ยมมาก!";
+                    micBtn.classList.replace('bg-red-50', 'bg-green-100');
+                    micBtn.classList.replace('border-red-200', 'border-green-400');
+                    micText.classList.replace('text-red-500', 'text-green-600');
+                    
+                    addXP(5); // ได้ 5 XP สำหรับการพูดถูก
+                    showFloatingXP(5);
+                } else {
+                    // ออกเสียงผิด
+                    micIcon.innerText = "🤔";
+                    micText.innerText = `ได้ยินว่า "${cleanTranscript}" ลองใหม่นะ`;
+                    micBtn.classList.replace('bg-red-50', 'bg-yellow-50');
+                    micBtn.classList.replace('border-red-200', 'border-yellow-300');
+                    micText.classList.replace('text-red-500', 'text-yellow-600');
+                }
+            };
+
+            recognition.onerror = function(event) {
+                micIcon.innerText = "🎤";
+                micText.innerText = "ไม่ค่อยได้ยินเลย กดลองใหม่นะ";
+                resetMicBtnStyle(micBtn, micText);
+            };
+
+            recognition.onend = function() {
+                micBtn.classList.remove('pulse-mic');
+                setTimeout(() => {
+                    micIcon.innerText = "🎤";
+                    micText.innerText = "กดเพื่อฝึกพูด";
+                    resetMicBtnStyle(micBtn, micText);
+                }, 2500); // กลับเป็นปุ่มเดิมหลัง 2.5 วินาที
+            };
+
+            recognition.start();
+        }
+
+        function resetMicBtnStyle(btn, text) {
+            btn.className = 'w-full bg-white border-2 border-slate-200 text-slate-600 font-bold py-3 rounded-xl btn-duo flex items-center justify-center gap-2';
+            text.className = '';
+        }
+
+        // --- Flashcard Logic ---
+        function loadFlashcard() {
+            currentWord = vocabList[currentIndex];
+            document.getElementById('fc-eng').innerText = currentWord.eng;
+            
+            // แสดงตัวสะกด (แยกด้วยขีด)
+            document.getElementById('fc-spelling').innerText = currentWord.eng.split('').join('-');
+
+            document.getElementById('fc-thai').innerText = currentWord.thai;
+            document.getElementById('fc-pronounce').innerText = `อ่านว่า: ${currentWord.pronounce}`;
+            
+            // Progress Bar
+            document.getElementById('fc-progress').innerText = currentIndex + 1;
+            const progressPercent = ((currentIndex + 1) / vocabList.length) * 100;
+            document.getElementById('learn-progress').style.width = `${progressPercent}%`;
+            
+            document.querySelector('.flashcard').classList.remove('flipped');
+            
+            // เล่นเสียงอัตโนมัติ
+            setTimeout(() => playClearAudio(currentWord.eng, false), 400);
+        }
+
+        function flipCard() {
+            document.querySelector('.flashcard').classList.toggle('flipped');
+        }
+
+        function nextCard() {
+            if (currentIndex < vocabList.length - 1) {
+                currentIndex++;
+                loadFlashcard();
+            } else {
+                // เรียนจบหมวด
+                alert("เก่งมาก! เรียนจบหมวดนี้แล้ว 🎉 ได้รับโบนัส +20 XP");
+                addXP(20);
+                navTo('screen-home');
+            }
+        }
+
+        function prevCard() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                loadFlashcard();
+            }
+        }
+
+        // --- Swipe Setup ---
+        let touchstartX = 0; let touchendX = 0;
+        const swipeArea = document.getElementById('swipe-area');
+
+        swipeArea.addEventListener('touchstart', e => touchstartX = e.changedTouches[0].screenX, {passive: true});
+        swipeArea.addEventListener('touchend', e => {
+            touchendX = e.changedTouches[0].screenX;
+            if (touchendX < touchstartX - 60) nextCard();
+            if (touchendX > touchstartX + 60) prevCard();
+        }, {passive: true});
+
+        // --- Quiz Logic ---
+        function nextQuiz() {
+            // อัปเดต Progress
+            const progressPercent = (quizCount / 5) * 100; // สมมติสุ่มมาเล่นทีละ 5 ข้อ
+            document.getElementById('quiz-progress').style.width = `${progressPercent}%`;
+
+            if (quizCount >= 5) {
+                alert("สุดยอด! ทำแบบทดสอบครบแล้ว 🎉");
+                navTo('screen-home');
+                return;
+            }
+
+            const randomIndex = Math.floor(Math.random() * vocabList.length);
+            currentQuizWord = vocabList[randomIndex];
+            
+            document.getElementById('quiz-word').innerText = currentQuizWord.eng;
+
+            let options = [currentQuizWord.thai];
+            while (options.length < 4) {
+                const randomWrong = vocabList[Math.floor(Math.random() * vocabList.length)].thai;
+                if (!options.includes(randomWrong)) options.push(randomWrong);
+            }
+            options.sort(() => Math.random() - 0.5); 
+
+            const container = document.getElementById('quiz-options');
+            container.innerHTML = '';
+            
+            options.forEach(option => {
+                const btn = document.createElement('button');
+                btn.className = 'bg-white border-2 border-slate-200 text-slate-700 text-xl font-bold py-4 px-6 rounded-2xl border-b-[6px] btn-duo text-left';
+                btn.innerText = option;
+                btn.onclick = () => checkAnswer(option === currentQuizWord.thai, btn);
+                container.appendChild(btn);
+            });
+
+            setTimeout(() => playClearAudio(currentQuizWord.eng, false), 400);
+        }
+
+        function checkAnswer(isCorrect, btn) {
+            const feedbackSheet = document.getElementById('quiz-feedback');
+            const backdrop = document.getElementById('quiz-backdrop');
+            const feedbackIcon = document.getElementById('feedback-icon');
+            const feedbackText = document.getElementById('feedback-text');
+            const feedbackSub = document.getElementById('feedback-sub');
+            const nextBtn = document.getElementById('feedback-btn');
+
+            document.querySelectorAll('#quiz-options button').forEach(b => b.style.pointerEvents = 'none');
+
+            if (isCorrect) {
+                btn.className = 'bg-green-100 border-2 border-green-500 text-green-700 text-xl font-bold py-4 px-6 rounded-2xl border-b-[6px] text-left';
+                addXP(10);
+                
+                feedbackIcon.innerText = '✅';
+                feedbackIcon.className = 'text-5xl bg-green-100 p-4 rounded-full text-green-500';
+                feedbackText.innerText = 'ยอดเยี่ยม!';
+                feedbackText.className = 'text-2xl font-bold text-green-500';
+                feedbackSub.innerText = '+10 XP';
+                feedbackSub.className = 'text-amber-500 font-bold text-lg';
+                nextBtn.className = 'bg-[#58cc02] text-white font-bold py-4 px-8 rounded-2xl border-b-[6px] border-[#58a700] w-full text-xl btn-duo mt-2';
+                
+                if('speechSynthesis' in window) { let s = new SpeechSynthesisUtterance("Correct"); s.rate=1.5; window.speechSynthesis.speak(s); }
+            } else {
+                btn.className = 'bg-red-50 border-2 border-red-300 text-red-500 text-xl font-bold py-4 px-6 rounded-2xl border-b-[6px] text-left shake-err';
+                
+                // หาข้อถูก
+                Array.from(document.getElementById('quiz-options').children).forEach(b => {
+                    if(b.innerText === currentQuizWord.thai) {
+                        b.className = 'bg-green-50 border-2 border-green-400 text-green-700 text-xl font-bold py-4 px-6 rounded-2xl border-b-[6px] text-left';
+                    }
+                });
+
+                feedbackIcon.innerText = '❌';
+                feedbackIcon.className = 'text-5xl bg-red-100 p-4 rounded-full text-red-500';
+                feedbackText.innerText = 'ผิดนิดเดียวนะ';
+                feedbackText.className = 'text-2xl font-bold text-red-500';
+                feedbackSub.innerText = `คำตอบ: ${currentQuizWord.thai}`;
+                feedbackSub.className = 'text-slate-500 font-bold text-lg';
+                nextBtn.className = 'bg-[#ff4b4b] text-white font-bold py-4 px-8 rounded-2xl border-b-[6px] border-[#cc1818] w-full text-xl btn-duo mt-2';
+                
+                if('speechSynthesis' in window) { let s = new SpeechSynthesisUtterance("Try again"); s.rate=1.5; window.speechSynthesis.speak(s); }
+            }
+
+            // โชว์ Bottom Sheet
+            backdrop.classList.remove('hidden');
+            feedbackSheet.classList.remove('translate-y-full');
+
+            nextBtn.onclick = () => {
+                feedbackSheet.classList.add('translate-y-full');
+                backdrop.classList.add('hidden');
+                quizCount++;
+                setTimeout(nextQuiz, 300);
+            };
+        }
+
+    </script>
+</body>
+</html>
